@@ -41,7 +41,10 @@
                 url: "/sign_out",
                 contentType: "text/json;charset=UTF-8",
                 data: JSON.stringify({ name: $name, password: $password })
-            })
+            }).then(() => {
+                alert('注册成功')
+                location.href = '/sign_in.html'
+            }, () => { })
         })
     </script>
 </body>
