@@ -20,6 +20,7 @@ var server = http.createServer(function (request, response) {
     var method = request.method;
 
     /******** 从这里开始看，上面不要看 ************/
+    const session = JSON.parse(fs.readFileSync('./session.json').toString())
 
     console.log("有个傻子发请求过来啦！路径（带查询参数）为：" + pathWithQuery);
     if (path === '/sign_in' && method === "POST") {
@@ -38,19 +39,23 @@ var server = http.createServer(function (request, response) {
                 response.setHeader('Content-Type', "text/json;charset=utf-8")
             } else {
                 response.statusCode = 200
-                response.setHeader('Set-Cookie', `user_id=${user.id}; HttpOnly`)
+                const random = Math.random()
+                session[random] = { user_id: user.id }
+                fs.writeFileSync('./session.json', JSON.stringify(session))
+                response.setHeader('Set-Cookie', `session_id=${random}; HttpOnly`)
             }
             response.end();
         })
     } else if (path === '/home.html') {
         const cookie = request.headers["cookie"]
-        let userId
+        let sessionId
         try {
-            userId = cookie.split(';').filter(s => s.indexOf('user_id=') >= 0)[0].split('=')[1]
+            sessionId = cookie.split(';').filter(s => s.indexOf('session_id=') >= 0)[0].split('=')[1]
         } catch (error) { }
-        if (userId) {
+        if (sessionId && session[sessionId]) {
+            const userId = session[sessionId].user_id
             const userArray = JSON.parse(fs.readFileSync('./db/users.json'))
-            const user = userArray.filter(user => user.id.toString() === userId)[0];
+            const user = userArray.filter(user => user.id === userId)[0];
             const homeHtml = fs.readFileSync('./src/home.html').toString()
             let string
             if (user) {
