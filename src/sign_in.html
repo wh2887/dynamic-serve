@@ -10,7 +10,43 @@
 </head>
 
 <body>
-    登录页
+    <form id="signInForm">
+        <div>
+            <label for="">
+                用户名：<input type="text" name="name" />
+            </label>
+        </div>
+        <div>
+            <label for="">
+                密码：<input type="password" name="password" />
+            </label>
+        </div>
+        <div>
+            <button type="submit">登录</button>
+        </div>
+    </form>
+    <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script>
+        const $form = $('#signInForm')
+        $form.on('submit', (e) => {
+            e.preventDefault()
+            const $name = $form.find('input[name=name]').val()
+            const $password = $form.find('input[name=password]').val()
+            console.log('name')
+            console.log($name)
+            console.log('password')
+            console.log($password)
+            $.ajax({
+                type: "POST",
+                url: "/sign_in",
+                contentType: "text/json;charset=UTF-8",
+                data: JSON.stringify({ name: $name, password: $password })
+            }).then(() => {
+                alert('登录成功')
+                location.href = '/home.html'
+            }, (error) => { console.log(error) })
+        })
+    </script>
 </body>
 
 </html>
