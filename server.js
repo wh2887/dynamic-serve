@@ -33,17 +33,41 @@ var server = http.createServer(function (request, response) {
             const string = Buffer.concat(array).toString()
             const obj = JSON.parse(string)
             const user = userArray.find((user) => user.name === obj.name && user.password === obj.password)
-            console.log(user)
             if (user === undefined) {
                 response.statusCode = 400
                 response.setHeader('Content-Type', "text/json;charset=utf-8")
-                response.end('{"error":"4001"}')
             } else {
                 response.statusCode = 200
-                response.end()
+                response.setHeader('Set-Cookie', `user_id=${user.id}; HttpOnly`)
             }
-            response.end()
+            response.end();
         })
+    } else if (path === '/home.html') {
+        const cookie = request.headers["cookie"]
+        let userId
+        try {
+            userId = cookie.split(';').filter(s => s.indexOf('user_id=') >= 0)[0].split('=')[1]
+        } catch (error) { }
+        if (userId) {
+            const userArray = JSON.parse(fs.readFileSync('./db/users.json'))
+            const user = userArray.filter(user => user.id.toString() === userId)[0];
+            const homeHtml = fs.readFileSync('./src/home.html').toString()
+            let string
+            if (user) {
+                string = homeHtml.replace('loginStatus', "已登录")
+                    .replace('{user.name}', user.name)
+            } else {
+                const string = homeHtml.replace('loginStatus', "未登录")
+                    .replace('{user.name}', '')
+            }
+            response.write(string)
+        } else {
+            const homeHtml = fs.readFileSync('./src/home.html').toString()
+            const string = homeHtml.replace('loginStatus', "未登录")
+                .replace('{user.name}', '')
+            response.write(string)
+        }
+        response.end();
     } else if (path === '/sign_out' && method === "POST") {
         response.setHeader('Content-Type', 'text/html;charset=utf-8')
         const userArray = JSON.parse(fs.readFileSync('./db/users.json'))
@@ -62,7 +86,7 @@ var server = http.createServer(function (request, response) {
             }
             userArray.push(newUser)
             fs.writeFileSync('./db/users.json', JSON.stringify(userArray))
-            response.end()
+            response.end();
         })
     } else {
         response.statusCode = 200;
